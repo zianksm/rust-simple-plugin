@@ -5,7 +5,7 @@ mod loader;
 use std::path::Path;
 
 use libloading::Symbol;
-use notify::{RecommendedWatcher, RecursiveMode, Result, Watcher};
+use notify::{RecursiveMode, Result, Watcher};
 
 fn main() -> Result<()> {
     // Automatically select the best implementation for your platform.
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 
     }
 
-    let compile = std::process::Command::new("rustc")
+    let _compile = std::process::Command::new("rustc")
         .arg("--crate-type")
         .arg("cdylib")
         .arg("./src/plugins/plugin.rs")

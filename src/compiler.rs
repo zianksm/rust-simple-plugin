@@ -19,7 +19,7 @@ impl Compiler {
 
         let dir = dir.to_str().unwrap();
 
-        let compile = std::process::Command::new("rustc")
+        let _compile = std::process::Command::new("rustc")
             .arg("--crate-type")
             .arg("cdylib")
             .arg(file)

@@ -1,4 +1,4 @@
-use std::error::Error;
+
 
 use notify::{Event, ReadDirectoryChangesWatcher};
 
@@ -14,7 +14,7 @@ impl Watcher {
         Self { dir, _self }
     }
 
-    fn handle_event(event: Result<Event, notify::Error>) {}
+    fn handle_event(_event: Result<Event, notify::Error>) {}
 
     pub fn start(&mut self) {}
 

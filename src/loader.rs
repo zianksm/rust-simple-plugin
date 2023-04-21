@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use libloading::{Library, Symbol};
+use libloading::{Library};
 
 pub struct Loader {
     plugin_dir: String,
