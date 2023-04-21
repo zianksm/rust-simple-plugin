@@ -1,17 +1,25 @@
-use std::path::Path;
+use std::{
+    path::Path,
+    sync::mpsc::{channel, Sender},
+};
 
 use notify::{Event, ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
 
 pub struct PluginDirectoryWatcher {
     dir: String,
     inner: ReadDirectoryChangesWatcher,
+    compiler_channel: Sender<String>,
 }
 
 impl PluginDirectoryWatcher {
-    pub fn new(dir: String) -> Self {
+    pub fn new(dir: String, compiler_channel: Sender<String>) -> Self {
         let _self = notify::recommended_watcher(Self::handle_event).unwrap();
 
-        Self { dir, inner: _self }
+        Self {
+            dir,
+            inner: _self,
+            compiler_channel,
+        }
     }
 
     fn handle_event(_event: Result<Event, notify::Error>) {}
