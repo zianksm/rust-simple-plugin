@@ -1,28 +1,21 @@
-mod watcher;
 mod compiler;
 mod loader;
+mod watcher;
 
-use std::path::Path;
+use std::{path::Path, sync::mpsc::channel};
 
 use libloading::Symbol;
 use notify::{RecursiveMode, Result, Watcher};
 
 fn main() -> Result<()> {
-    // Automatically select the best implementation for your platform.
-    let mut watcher = notify::recommended_watcher(|res| {
-        match res {
-           Ok(event) => println!("event: {:?}", event),
-           Err(e) => println!("watch error: {:?}", e),
-        }
-    })?;
 
-    // Add a path to be watched. All files and directories at that path and
-    // below will be monitored for changes.
-    watcher.watch(Path::new("./src/plugins"), RecursiveMode::Recursive)?;
+    let (tx, rx) = channel::<String>();
 
-    loop {
+    let mut watcher = watcher::PluginDirectoryWatcher::new("./src/plugins".to_string(), tx);
 
-    }
+    watcher.start();
+
+    loop {}
 
     // let _compile = std::process::Command::new("rustc")
     //     .arg("--crate-type")

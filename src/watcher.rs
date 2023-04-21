@@ -34,7 +34,8 @@ impl PluginDirectoryWatcher {
 
     pub fn start(&mut self) -> Result<bool, Box<dyn std::error::Error>> {
         let self_clone = self.clone();
-        let mut watcher = notify::recommended_watcher(move|ev| self_clone.handle_event(ev)).unwrap();
+        let mut watcher =
+            notify::recommended_watcher(move |ev| self_clone.handle_event(ev)).unwrap();
 
         watcher.watch(Path::new(&self.dir), RecursiveMode::Recursive)?;
 
@@ -46,7 +47,7 @@ impl PluginDirectoryWatcher {
     pub fn stop(&mut self) -> Result<bool, Box<dyn std::error::Error>> {
         let mut watcher = self.inner.lock().unwrap();
         let watcher = watcher.as_mut().unwrap();
-        
+
         watcher.unwatch(Path::new(&self.dir))?;
 
         Ok(true)
@@ -54,16 +55,20 @@ impl PluginDirectoryWatcher {
 
     fn infer_event(&self, event: Event) {
         match event.kind {
-            notify::EventKind::Any => todo!(),
-            notify::EventKind::Access(_) => todo!(),
-            notify::EventKind::Create(_) => todo!(),
+            notify::EventKind::Any => (),
+            notify::EventKind::Access(_) => (),
+            notify::EventKind::Create(_) => (),
             notify::EventKind::Modify(_) => self.call_compiler(event),
-            notify::EventKind::Remove(_) => todo!(),
-            notify::EventKind::Other => todo!(),
+            notify::EventKind::Remove(_) => (),
+            notify::EventKind::Other => (),
         }
     }
 
     fn call_compiler(&self, event: Event) {
         let file = event.paths[0].file_name().unwrap().to_str().unwrap();
+
+        let compiler = self.compiler_channel.lock().unwrap();
+
+        compiler.send(file.to_string());
     }
 }
