@@ -1,62 +1,69 @@
 use core::panic;
 use std::{
     path::Path,
-    sync::mpsc::{channel, Sender},
+    sync::{
+        mpsc::{channel, Sender},
+        Arc, Mutex,
+    },
 };
 
 use notify::{Event, ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
 
+#[derive(Clone)]
 pub struct PluginDirectoryWatcher {
     dir: String,
-    inner: ReadDirectoryChangesWatcher,
-    compiler_channel: Sender<String>,
+    inner: Arc<Mutex<Option<ReadDirectoryChangesWatcher>>>,
+    compiler_channel: Arc<Mutex<Sender<String>>>,
 }
 
 impl PluginDirectoryWatcher {
     pub fn new(dir: String, compiler_channel: Sender<String>) -> Self {
-        let _self = notify::recommended_watcher(Self::handle_event).unwrap();
-
         Self {
             dir,
-            inner: _self,
-            compiler_channel,
+            inner: Arc::new(Mutex::new(None)),
+            compiler_channel: Arc::new(Mutex::new(compiler_channel)),
         }
     }
 
-    fn handle_event(event: Result<Event, notify::Error>) {
+    fn handle_event(&self, event: Result<Event, notify::Error>) {
         match event {
-            Ok(ev) => Self::infer_event(ev),
+            Ok(ev) => self.infer_event(ev),
             Err(err) => panic!("{}", err),
         }
     }
 
     pub fn start(&mut self) -> Result<bool, Box<dyn std::error::Error>> {
-        let mut watcher = self
-            .inner
-            .watch(Path::new(&self.dir), RecursiveMode::Recursive)?;
+        let self_clone = self.clone();
+        let mut watcher = notify::recommended_watcher(move|ev| self_clone.handle_event(ev)).unwrap();
+
+        watcher.watch(Path::new(&self.dir), RecursiveMode::Recursive)?;
+
+        self.inner = Arc::new(Mutex::new(Some(watcher)));
 
         Ok(true)
     }
 
     pub fn stop(&mut self) -> Result<bool, Box<dyn std::error::Error>> {
-        self.inner.unwatch(Path::new(&self.dir))?;
+        let mut watcher = self.inner.lock().unwrap();
+        let watcher = watcher.as_mut().unwrap();
+        
+        watcher.unwatch(Path::new(&self.dir))?;
 
         Ok(true)
     }
 
-    fn infer_event(event: Event) {
+    fn infer_event(&self, event: Event) {
         match event.kind {
             notify::EventKind::Any => todo!(),
             notify::EventKind::Access(_) => todo!(),
             notify::EventKind::Create(_) => todo!(),
-            notify::EventKind::Modify(_) => Self::call_compiler(event),
+            notify::EventKind::Modify(_) => self.call_compiler(event),
             notify::EventKind::Remove(_) => todo!(),
             notify::EventKind::Other => todo!(),
         }
     }
 
-    fn call_compiler(event: Event) {
-    //  let path =    event.paths
+    fn call_compiler(&self, event: Event) {
+        let file = event.paths[0].file_name().unwrap().to_str().unwrap();
     }
-
 }
