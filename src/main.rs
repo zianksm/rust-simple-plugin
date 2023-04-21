@@ -1,4 +1,5 @@
 mod watcher;
+mod compiler;
 
 use std::path::Path;
 
