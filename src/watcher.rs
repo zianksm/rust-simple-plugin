@@ -17,11 +17,11 @@ pub struct PluginDirectoryWatcher {
 }
 
 impl PluginDirectoryWatcher {
-    pub fn new(dir: String, compiler_channel: Sender<String>) -> Self {
+    pub fn new(dir: String, compiler_send_channel: Sender<String>) -> Self {
         Self {
             dir,
             inner: Arc::new(Mutex::new(None)),
-            compiler_channel: Arc::new(Mutex::new(compiler_channel)),
+            compiler_channel: Arc::new(Mutex::new(compiler_send_channel)),
         }
     }
 
@@ -66,6 +66,12 @@ impl PluginDirectoryWatcher {
 
     fn call_compiler(&self, event: Event) {
         let file = event.paths[0].file_name().unwrap().to_str().unwrap();
+
+        if !file.contains(".rs"){
+            return;
+        }
+
+        println!("recompiling: {file}");
 
         let compiler = self.compiler_channel.lock().unwrap();
 

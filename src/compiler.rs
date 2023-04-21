@@ -8,19 +8,20 @@ use std::{
 pub struct Compiler {
     plugin_dir: String,
     inner_recv: Receiver<String>,
-    inner_sender: Sender<String>,
-    loader_channel: Sender<String>,
+    loader_send_channel: Sender<String>,
 }
 
 impl Compiler {
-    pub fn new(plugin_dir: &str, loader_channel: Sender<String>) -> Self {
-        let (inner_sender, watcher_receiver) = channel::<String>();
+    pub fn new(
+        plugin_dir: String,
+        rx: Receiver<String>,
+        loader_send_channel: Sender<String>,
+    ) -> Self {
 
         Self {
-            plugin_dir: plugin_dir.to_string(),
-            inner_sender,
-            inner_recv: watcher_receiver,
-            loader_channel,
+            plugin_dir,
+            inner_recv: rx,
+            loader_send_channel,
         }
     }
 
@@ -47,11 +48,8 @@ impl Compiler {
         std::thread::spawn(move || loop {
             let file = self.inner_recv.recv().unwrap();
             self.compile(&file);
-            self.loader_channel.send(file.clone());
+            self.loader_send_channel.send(file.clone());
         })
     }
 
-    pub fn sender(&self) -> Sender<String> {
-        self.inner_sender.clone()
-    }
 }
