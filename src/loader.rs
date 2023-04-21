@@ -25,16 +25,24 @@ impl Loader {
     pub fn start(self) -> std::thread::JoinHandle<()> {
         std::thread::spawn(move || loop {
             let file = self.inner_recv.recv().unwrap();
+            println!("loading: {file}");
+
             let file = file.replace(".rs", ".dll");
+
             let lib = self.load(&file).unwrap();
+
+            println!("executing: {file}");
             self.execute(lib);
         })
     }
 
     fn execute(&self, lib: Library) {
         unsafe {
-            let _fn: Symbol<fn() -> ()> = lib.get(b"test\0").unwrap();
-            _fn();
+            let arg = String::from("Alice");
+            let _fn: Symbol<fn(arg: String) -> ()> = lib.get(b"test\0").unwrap();
+            _fn(arg);
+
+            println!("done\n");
         };
     }
 }

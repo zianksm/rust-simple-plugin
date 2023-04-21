@@ -1,5 +1,4 @@
 #[no_mangle]
-pub fn test(){
-    println!("hello world");
-}  
-
+pub fn test(arg: String) {
+    println!("hello {arg}");
+}
