@@ -2,3 +2,4 @@
 
 src/plugins/*
 !src/plugins/*.rs
+.vscode

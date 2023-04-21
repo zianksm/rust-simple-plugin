@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     path::Path,
     sync::mpsc::{channel, Sender},
@@ -22,7 +23,12 @@ impl PluginDirectoryWatcher {
         }
     }
 
-    fn handle_event(_event: Result<Event, notify::Error>) {}
+    fn handle_event(event: Result<Event, notify::Error>) {
+        match event {
+            Ok(ev) => Self::infer_event(ev),
+            Err(err) => panic!("{}", err),
+        }
+    }
 
     pub fn start(&mut self) -> Result<bool, Box<dyn std::error::Error>> {
         let mut watcher = self
@@ -37,4 +43,20 @@ impl PluginDirectoryWatcher {
 
         Ok(true)
     }
+
+    fn infer_event(event: Event) {
+        match event.kind {
+            notify::EventKind::Any => todo!(),
+            notify::EventKind::Access(_) => todo!(),
+            notify::EventKind::Create(_) => todo!(),
+            notify::EventKind::Modify(_) => Self::call_compiler(event),
+            notify::EventKind::Remove(_) => todo!(),
+            notify::EventKind::Other => todo!(),
+        }
+    }
+
+    fn call_compiler(event: Event) {
+    //  let path =    event.paths
+    }
+
 }

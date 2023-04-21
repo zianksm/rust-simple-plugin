@@ -1,5 +1,6 @@
 use std::{
     error::Error,
+    os::windows::thread,
     path::Path,
     sync::mpsc::{channel, Receiver, Sender},
 };
@@ -7,21 +8,23 @@ use std::{
 pub struct Compiler {
     plugin_dir: String,
     inner_recv: Receiver<String>,
-    sender_channel: Sender<String>,
+    inner_sender: Sender<String>,
+    loader_channel: Sender<String>,
 }
 
 impl Compiler {
-    pub fn new(plugin_dir: &str) -> Self {
+    pub fn new(plugin_dir: &str, loader_channel: Sender<String>) -> Self {
         let (inner_sender, watcher_receiver) = channel::<String>();
 
         Self {
             plugin_dir: plugin_dir.to_string(),
-            sender_channel: inner_sender,
+            inner_sender,
             inner_recv: watcher_receiver,
+            loader_channel,
         }
     }
 
-    pub fn compile(&self, file: &str) -> Result<bool, Box<dyn Error>> {
+    fn compile(&self, file: &str) -> Result<bool, Box<dyn Error>> {
         let dir = Path::new(&self.plugin_dir);
 
         let file = dir.join(file);
@@ -40,11 +43,15 @@ impl Compiler {
         Ok(true)
     }
 
-    pub fn watcher_receiver(&self) -> &Receiver<String> {
-        &self.inner_recv
+    pub fn start(self) -> std::thread::JoinHandle<()> {
+        std::thread::spawn(move || loop {
+            let file = self.inner_recv.recv().unwrap();
+            self.compile(&file);
+            self.loader_channel.send(file.clone());
+        })
     }
 
-    pub fn inner_sender(&self) -> Sender<String> {
-        self.sender_channel.clone()
+    pub fn sender(&self) -> Sender<String> {
+        self.inner_sender.clone()
     }
 }
