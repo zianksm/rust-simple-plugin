@@ -1,5 +1,6 @@
 mod watcher;
 mod compiler;
+mod loader;
 
 use std::path::Path;
 
