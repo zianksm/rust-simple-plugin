@@ -1,4 +1,4 @@
 #[no_mangle]
-pub fn test(){
-    println!("this is a plugin");
+pub fn test(arg: String) {
+    println!("hello {arg}");
 }
